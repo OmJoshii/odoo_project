@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Report Action -->
+    <record id="action_report_library_book"
+            model="ir.actions.report">
+        <field name="name">Library Book Report</field>
+        <field name="model">library.book</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">library_management.report_library_book_template</field>
+        <field name="report_file">library_management.report_library_book_template</field>
+        <field name="print_report_name">'Library Book - %s' % object.name</field>
+        <field name="binding_model_id" ref="library_management.model_library_book"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Report Template -->
+    <template id="report_library_book_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="row mt-4 mb-4">
+                            <div class="col-12 text-center">
+                                <h2>Library Book Report</h2>
+                                <h4><span t-field="doc.name"/></h4>
+                            </div>
+                        </div>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr class="bg-primary text-white">
+                                    <th>Field</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Title</strong></td>
+                                    <td><span t-field="doc.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Author</strong></td>
+                                    <td>
+                                        <t t-if="doc.author_id">
+                                            <span t-field="doc.author_id.name"/>
+                                        </t>
+                                        <t t-else="">N/A</t>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ISBN</strong></td>
+                                    <td>
+                                        <t t-if="doc.isbn">
+                                            <span t-field="doc.isbn"/>
+                                        </t>
+                                        <t t-else="">N/A</t>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pages</strong></td>
+                                    <td><span t-field="doc.pages"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Price</strong></td>
+                                    <td><span t-field="doc.price"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status</strong></td>
+                                    <td><span t-field="doc.state"/></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Published</strong></td>
+                                    <td>
+                                        <t t-if="doc.date_published">
+                                            <span t-field="doc.date_published"/>
+                                        </t>
+                                        <t t-else="">N/A</t>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Available</strong></td>
+                                    <td>
+                                        <t t-if="doc.is_available">Yes</t>
+                                        <t t-else="">No</t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <t t-if="doc.category_ids">
+                            <div class="mt-4">
+                                <h5>Categories</h5>
+                                <ul>
+                                    <t t-foreach="doc.category_ids" t-as="cat">
+                                        <li><span t-field="cat.name"/></li>
+                                    </t>
+                                </ul>
+                            </div>
+                        </t>
+                        <t t-if="doc.description">
+                            <div class="mt-4">
+                                <h5>Description</h5>
+                                <p t-field="doc.description"/>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- All Books Report Action -->
+    <record id="action_report_all_library_books" model="ir.actions.report">
+        <field name="name">All Books Report</field>
+        <field name="model">library.book</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">library_management.report_all_library_books_template</field>
+        <field name="report_file">library_management.report_all_library_books_template</field>
+        <field name="binding_model_id" ref="library_management.model_library_book"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- All Books Template -->
+    <template id="report_all_library_books_template">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="row mb-4">
+                        <div class="col-12 text-center">
+                            <h2>Library Books Catalogue</h2>
+                        </div>
+                    </div>
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr class="bg-primary text-white">
+                                <th>#</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>ISBN</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="docs" t-as="doc">
+                                <tr>
+                                    <td><t t-esc="doc_index + 1"/></td>
+                                    <td><span t-field="doc.name"/></td>
+                                    <td>
+                                        <t t-if="doc.author_id">
+                                            <span t-field="doc.author_id.name"/>
+                                        </t>
+                                        <t t-else="">—</t>
+                                    </td>
+                                    <td>
+                                        <t t-if="doc.isbn">
+                                            <span t-field="doc.isbn"/>
+                                        </t>
+                                        <t t-else="">—</t>
+                                    </td>
+                                    <td><span t-field="doc.price"/></td>
+                                    <td><span t-field="doc.state"/></td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    <div class="mt-4">
+                        <p>
+                            <strong>Total Books: </strong>
+                            <t t-esc="len(docs)"/>
+                        </p>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+</odoo>

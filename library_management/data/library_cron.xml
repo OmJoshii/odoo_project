@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================
+         SCHEDULED ACTION 1 — Check overdue books daily
+    ============================================================ -->
+    <record id="ir_cron_check_overdue_books" model="ir.cron">
+        <field name="name">Library: Check Overdue Books</field>
+        <field name="model_id"
+               ref="library_management.model_library_book"/>
+        <field name="state">code</field>
+        <field name="code">
+            model.action_check_overdue_books()
+        </field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="priority">10</field>
+    </record>
+
+    <!-- SCHEDULED ACTION 2 — Expire memberships daily -->
+    <record id="ir_cron_expire_memberships" model="ir.cron">
+        <field name="name">Library: Expire Memberships</field>
+        <field name="model_id"
+               ref="base.model_res_partner"/>
+        <field name="state">code</field>
+        <field name="code">
+            model.action_expire_memberships()
+        </field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+        <field name="priority">10</field>
+    </record>
+
+</odoo>
