@@ -1,0 +1,189 @@
+from odoo import models, fields, api
+from odoo.exceptions import ValidationError
+
+
+class LibraryBook(models.Model):
+    _name = 'library.book'
+    _description = 'Library Book'
+
+    name = fields.Char(string='Title', required=True)
+
+    # Many2one — many books link to one author
+    author_id = fields.Many2one(
+        comodel_name='library.author',
+        string='Author',
+        ondelete='set null',
+    )
+
+    # Many2many — many books link to many categories
+    category_ids = fields.Many2many(
+        comodel_name='library.category',
+        relation='library_book_category_rel',
+        column1='book_id',
+        column2='category_id',
+        string='Categories'
+    )
+
+    isbn = fields.Char(string='ISBN')
+    pages = fields.Integer(string='Number of Pages')
+    price = fields.Float(string='Price')
+    is_available = fields.Boolean(string='Is Available', default=True)
+    date_published = fields.Date(string='Published Date')
+    description = fields.Text(string='Description')
+    state = fields.Selection([
+        ('available', 'Available'),
+        ('borrowed', 'Borrowed'),
+        ('lost', 'Lost'),
+    ], string='Status', default='available')
+
+    # ── Computed field ──────────────────────────────────────
+    author_nationality = fields.Char(
+        string='Author Nationality',
+        compute='_compute_author_nationality',
+        store=True,
+    )
+
+    short_description = fields.Char(
+        string='Short Description',
+        compute='_compute_short_description',
+        store=False,
+    )
+
+    # ── SQL Constraints ──────────────────────────────────────
+    _sql_constraints = [
+        (
+            'unique_isbn',
+            'UNIQUE(isbn)',
+            'A book with this ISBN already exists!'
+        ),
+        (
+            'positive_price',
+            'CHECK(price >= 0)',
+            'Price cannot be negative!'
+        ),
+        (
+            'positive_pages',
+            'CHECK(pages >= 0)',
+            'Number of pages cannot be negative!'
+        ),
+    ]
+
+    # ── Compute methods ─────────────────────────────────────
+    @api.depends('author_id', 'author_id.nationality')
+    def _compute_author_nationality(self):
+        for rec in self:
+            if rec.author_id and rec.author_id.nationality:
+                rec.author_nationality = rec.author_id.nationality
+            else:
+                rec.author_nationality = 'Unknown'
+
+    @api.depends('description')
+    def _compute_short_description(self):
+        for rec in self:
+            if rec.description:
+                rec.short_description = rec.description[:80] + '...'
+            else:
+                rec.short_description = 'No description available'
+
+    # ── Onchange method ──────────────────────────────────────
+    @api.onchange('state')
+    def _onchange_state(self):
+        if self.state == 'borrowed':
+            self.is_available = False
+        elif self.state == 'available':
+            self.is_available = True
+        elif self.state == 'lost':
+            self.is_available = False
+
+    
+    # ── Python Constraints ───────────────────────────────────
+    @api.constrains('isbn')
+    def _check_isbn(self):
+        for rec in self:
+            if rec.isbn and len(rec.isbn) not in [10, 13]:
+                raise ValidationError(
+                    f'ISBN must be 10 or 13 characters long. '
+                    f'You entered {len(rec.isbn)} characters.'
+                )
+
+    @api.constrains('date_published')
+    def _check_date_published(self):
+        for rec in self:
+            if rec.date_published and rec.date_published > fields.Date.today():
+                raise ValidationError(
+                    'Published date cannot be in the future!'
+                )
+
+    @api.constrains('price', 'pages')
+    def _check_price_and_pages(self):
+        for rec in self:
+            if rec.price < 0:
+                raise ValidationError('Price cannot be negative!')
+            if rec.pages < 0:
+                raise ValidationError(
+                    'Number of pages cannot be negative!'
+                )
+            
+
+    # ── Wizard button methods ────────────────────────────────
+    def action_open_borrow_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Borrow Book',
+            'res_model': 'library.borrow.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_book_id': self.id,
+            },
+        }
+
+    def action_return_book(self):
+        self.ensure_one()
+        self.write({
+            'state': 'available',
+            'is_available': True,
+        })
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Book Returned!',
+                'message': f'"{self.name}" is now available.',
+                'type': 'success',
+                'sticky': False,
+            }
+        }
+    
+    # ── Scheduled Action Methods ─────────────────────────────
+    @api.model
+    def action_check_overdue_books(self):
+        """
+        Runs daily — finds all borrowed books and
+        logs a warning. In production you would
+        send emails or create activities here.
+        """
+        today = fields.Date.today()
+        borrowed_books = self.search([
+            ('state', '=', 'borrowed'),
+        ])
+        overdue_count = 0
+        for book in borrowed_books:
+            overdue_count += 1
+
+        # Log to Odoo server logs
+        import logging
+        _logger = logging.getLogger(__name__)
+        _logger.info(
+            'Library cron: %d borrowed book(s) checked on %s',
+            overdue_count,
+            today,
+        )
+        return True 
+    
+    def action_print_report(self):
+        self.ensure_one()
+        return self.env.ref(
+            'library_management.action_report_library_book'
+        ).report_action(self)

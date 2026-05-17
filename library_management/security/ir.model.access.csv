@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_library_book_user,library.book user,library_management.model_library_book,library_management.group_library_user,1,0,0,0
+access_library_book_librarian,library.book librarian,library_management.model_library_book,library_management.group_library_librarian,1,1,1,0
+access_library_book_manager,library.book manager,library_management.model_library_book,library_management.group_library_manager,1,1,1,1
+access_library_author_user,library.author user,library_management.model_library_author,library_management.group_library_user,1,0,0,0
+access_library_author_librarian,library.author librarian,library_management.model_library_author,library_management.group_library_librarian,1,1,1,1
+access_library_category_user,library.category user,library_management.model_library_category,library_management.group_library_user,1,0,0,0
+access_library_category_librarian,library.category librarian,library_management.model_library_category,library_management.group_library_librarian,1,1,1,1
+access_library_borrow_wizard,library.borrow.wizard,library_management.model_library_borrow_wizard,library_management.group_library_librarian,1,1,1,1
