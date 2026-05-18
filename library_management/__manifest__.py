@@ -19,6 +19,7 @@
         'views/views.xml',
         'views/library_report.xml',
         'views/library_website_templates.xml',
+        'data/library_sequence.xml',
         'data/library_cron.xml',
     ],
     'demo': [],
