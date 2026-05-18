@@ -12,12 +12,13 @@
         - Record borrowing history
     ''',
     'author': 'Om',
-    'depends': ['base'],
+    'depends': ['base', 'website'],
     'data': [
         'security/library_security.xml',
         'security/ir.model.access.csv',
         'views/views.xml',
         'views/library_report.xml',
+        'views/library_website_templates.xml',
         'data/library_cron.xml',
     ],
     'demo': [],
