@@ -68,3 +68,110 @@ class LibraryWebsiteController(http.Controller):
             'library_management.template_library_book_detail',
             {'book': book}
         )
+    
+    # ── NEW: Borrow form page ─────────────────────────────────
+    @http.route(
+        '/library/borrow/<int:book_id>',
+        type='http',
+        auth='public',
+        website=True,
+    )
+    def library_borrow_form(self, book_id, **kwargs):
+        """
+        Shows the borrow form for a specific book
+        """
+        book = request.env['library.book'].sudo().browse(book_id)
+        if not book.exists():
+            return request.not_found()
+        if book.state != 'available':
+            return request.redirect('/library')
+        return request.render(
+            'library_management.template_library_borrow_form',
+            {
+                'book': book,
+                'today': fields.Date.today(),
+                'error': kwargs.get('error'),
+            }
+        )
+
+    # ── NEW: Handle borrow form submission ────────────────────
+    @http.route(
+        '/library/borrow/submit',
+        type='http',
+        auth='public',
+        website=True,
+        methods=['POST'],
+    )
+    def library_borrow_submit(self, **kwargs):
+        """
+        Handles the POST submission of the borrow form
+        """
+        book_id = int(kwargs.get('book_id', 0))
+        borrower_name = kwargs.get('borrower_name', '').strip()
+        borrower_email = kwargs.get('borrower_email', '').strip()
+        borrow_date = kwargs.get('borrow_date')
+        return_date = kwargs.get('return_date')
+
+        # Basic validation
+        if not all([borrower_name, borrower_email,
+                    borrow_date, return_date]):
+            return request.redirect(
+                f'/library/borrow/{book_id}?error=missing_fields'
+            )
+
+        # Email validation
+        if '@' not in borrower_email:
+            return request.redirect(
+                f'/library/borrow/{book_id}?error=invalid_email'
+            )
+
+        book = request.env['library.book'].sudo().browse(book_id)
+        if not book.exists() or book.state != 'available':
+            return request.redirect('/library')
+
+        try:
+            # Create borrow request
+            request.env['library.borrow.request'].sudo().create({
+                'book_id': book_id,
+                'borrower_name': borrower_name,
+                'borrower_email': borrower_email,
+                'borrow_date': borrow_date,
+                'return_date': return_date,
+            })
+
+            # Mark book as borrowed
+            book.sudo().write({
+                'state': 'borrowed',
+                'is_available': False,
+            })
+
+        except Exception as e:
+            _logger.error('Borrow request failed: %s', str(e))
+            return request.redirect(
+                f'/library/borrow/{book_id}?error=server_error'
+            )
+
+        # Redirect to success page
+        return request.redirect(
+            f'/library/borrow/success?name={borrower_name}'
+            f'&book={book.name}'
+        )
+
+    # ── NEW: Success page ─────────────────────────────────────
+    @http.route(
+        '/library/borrow/success',
+        type='http',
+        auth='public',
+        website=True,
+    )
+    def library_borrow_success(self, **kwargs):
+        """
+        Success page shown after successful borrow
+        """
+        return request.render(
+            'library_management.template_library_borrow_success',
+            {
+                'borrower_name': kwargs.get('name', 'Friend'),
+                'book_name': kwargs.get('book', 'the book'),
+            }
+        )
