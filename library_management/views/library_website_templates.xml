@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- ============================================================
-         HOME PAGE — /library
-    ============================================================ -->
+    <!-- HOME PAGE — /library -->
     <template id="template_library_home" name="Library Home">
         <t t-call="website.layout">
             <div class="container mt-4 mb-5">
@@ -21,11 +19,15 @@
                 </div>
 
                 <!-- Stats Bar -->
-                <div class="row mb-5">
+                <div class="row mb-4">
                     <div class="col-md-4 mb-3">
-                        <div class="card text-center border-0 shadow-sm">
+                        <div t-attf-class="card text-center
+                             border-0 shadow-sm #{
+                             'border-primary border-2'
+                             if active_filter == 'all' else ''}">
                             <div class="card-body py-4">
-                                <h2 class="display-4 fw-bold text-primary">
+                                <h2 class="display-4 fw-bold
+                                    text-primary">
                                     <t t-esc="total_books"/>
                                 </h2>
                                 <p class="text-muted mb-0">
@@ -35,9 +37,14 @@
                         </div>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <div class="card text-center border-0 shadow-sm">
+                        <div t-attf-class="card text-center
+                             border-0 shadow-sm #{
+                             'border-success border-2'
+                             if active_filter == 'available'
+                             else ''}">
                             <div class="card-body py-4">
-                                <h2 class="display-4 fw-bold text-success">
+                                <h2 class="display-4 fw-bold
+                                    text-success">
                                     <t t-esc="total_available"/>
                                 </h2>
                                 <p class="text-muted mb-0">
@@ -47,9 +54,14 @@
                         </div>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <div class="card text-center border-0 shadow-sm">
+                        <div t-attf-class="card text-center
+                             border-0 shadow-sm #{
+                             'border-warning border-2'
+                             if active_filter == 'borrowed'
+                             else ''}">
                             <div class="card-body py-4">
-                                <h2 class="display-4 fw-bold text-warning">
+                                <h2 class="display-4 fw-bold
+                                    text-warning">
                                     <t t-esc="total_borrowed"/>
                                 </h2>
                                 <p class="text-muted mb-0">
@@ -66,36 +78,39 @@
                         <ul class="nav nav-tabs">
                             <li class="nav-item">
                                 <a t-attf-class="nav-link #{
-                                       'active fw-bold' if active_filter == 'all'
-                                       else ''
-                                   }"
+                                       'active fw-bold'
+                                       if active_filter == 'all'
+                                       else ''}"
                                    href="/library">
                                     All Books
-                                    <span class="badge bg-secondary ms-1">
+                                    <span class="badge
+                                          bg-secondary ms-1">
                                         <t t-esc="total_books"/>
                                     </span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a t-attf-class="nav-link #{
-                                       'active fw-bold' if active_filter == 'available'
-                                       else ''
-                                   }"
+                                       'active fw-bold'
+                                       if active_filter == 'available'
+                                       else ''}"
                                    href="/library?book_filter=available">
                                     Available
-                                    <span class="badge bg-success ms-1">
+                                    <span class="badge
+                                          bg-success ms-1">
                                         <t t-esc="total_available"/>
                                     </span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a t-attf-class="nav-link #{
-                                       'active fw-bold' if active_filter == 'borrowed'
-                                       else ''
-                                   }"
+                                       'active fw-bold'
+                                       if active_filter == 'borrowed'
+                                       else ''}"
                                    href="/library?book_filter=borrowed">
                                     Borrowed
-                                    <span class="badge bg-warning text-dark ms-1">
+                                    <span class="badge
+                                          bg-warning text-dark ms-1">
                                         <t t-esc="total_borrowed"/>
                                     </span>
                                 </a>
@@ -103,13 +118,12 @@
                         </ul>
                     </div>
                 </div>
+
                 <!-- Books Grid -->
                 <div class="row">
                     <t t-foreach="books" t-as="book">
                         <div class="col-md-4 col-sm-6 mb-4">
                             <div class="card h-100 shadow-sm">
-
-                                <!-- Status ribbon -->
                                 <div class="card-header d-flex
                                      justify-content-between
                                      align-items-center">
@@ -122,7 +136,8 @@
                                         </span>
                                     </t>
                                     <t t-elif="book.state == 'borrowed'">
-                                        <span class="badge bg-warning text-dark">
+                                        <span class="badge bg-warning
+                                              text-dark">
                                             Borrowed
                                         </span>
                                     </t>
@@ -132,12 +147,12 @@
                                         </span>
                                     </t>
                                 </div>
-
                                 <div class="card-body">
                                     <h5 class="card-title">
                                         <t t-esc="book.name"/>
                                     </h5>
-                                    <p class="card-text text-muted mb-1">
+                                    <p class="card-text
+                                       text-muted mb-1">
                                         <t t-if="book.author_id">
                                             <i class="fa fa-user me-1"/>
                                             <t t-esc="book.author_id.name"/>
@@ -154,7 +169,6 @@
                                         </small>
                                     </t>
                                 </div>
-
                                 <div class="card-footer d-flex
                                      justify-content-between
                                      align-items-center">
@@ -162,11 +176,11 @@
                                         Rs. <t t-esc="book.price"/>
                                     </strong>
                                     <a t-attf-href="/library/book/#{book.id}"
-                                       class="btn btn-sm btn-outline-primary">
+                                       class="btn btn-sm
+                                              btn-outline-primary">
                                         View Details →
                                     </a>
                                 </div>
-
                             </div>
                         </div>
                     </t>
@@ -174,12 +188,37 @@
                     <!-- Empty state -->
                     <t t-if="not books">
                         <div class="col-12 text-center py-5">
-                            <i class="fa fa-book fa-4x text-muted mb-3"/>
-                            <h4 class="text-muted">No books found</h4>
+                            <i class="fa fa-book fa-4x
+                               text-muted mb-3"/>
+                            <t t-if="active_filter == 'available'">
+                                <h4 class="text-muted">
+                                    No books available right now
+                                </h4>
+                                <p class="text-muted">
+                                    All books are currently borrowed
+                                </p>
+                            </t>
+                            <t t-elif="active_filter == 'borrowed'">
+                                <h4 class="text-muted">
+                                    No books currently borrowed
+                                </h4>
+                                <p class="text-muted">
+                                    All books are available!
+                                </p>
+                            </t>
+                            <t t-else="">
+                                <h4 class="text-muted">
+                                    No books in the library yet
+                                </h4>
+                            </t>
+                            <a href="/library"
+                               class="btn btn-primary mt-3">
+                                View All Books
+                            </a>
                         </div>
                     </t>
-                </div>
 
+                </div>
             </div>
         </t>
     </template>
