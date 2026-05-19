@@ -492,6 +492,17 @@
                                             Confirm Borrow Request
                                         </button>
                                     </div>
+                        <!-- Pending request warning -->
+                        <t t-if="has_pending">
+                            <div class="alert alert-warning">
+                                <i class="fa fa-exclamation-triangle me-2"/>
+                                <strong>Note:</strong>
+                                There is already a pending borrow
+                                request for this book. You can still
+                                submit a request and the librarian
+                                will process it.
+                            </div>
+                        </t>
 
                                 </form>
                             </div>

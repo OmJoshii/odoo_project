@@ -77,20 +77,27 @@ class LibraryWebsiteController(http.Controller):
         website=True,
     )
     def library_borrow_form(self, book_id, **kwargs):
-        """
-        Shows the borrow form for a specific book
-        """
         book = request.env['library.book'].sudo().browse(book_id)
         if not book.exists():
             return request.not_found()
         if book.state != 'available':
             return request.redirect('/library')
+
+        # Check if pending request already exists
+        existing = request.env[
+            'library.borrow.request'
+        ].sudo().search_count([
+            ('book_id', '=', book_id),
+            ('state', '=', 'pending'),
+        ])
+
         return request.render(
             'library_management.template_library_borrow_form',
             {
                 'book': book,
                 'today': fields.Date.today(),
                 'error': kwargs.get('error'),
+                'has_pending': existing > 0,
             }
         )
 
@@ -103,9 +110,6 @@ class LibraryWebsiteController(http.Controller):
         methods=['POST'],
     )
     def library_borrow_submit(self, **kwargs):
-        """
-        Handles the POST submission of the borrow form
-        """
         book_id = int(kwargs.get('book_id', 0))
         borrower_name = kwargs.get('borrower_name', '').strip()
         borrower_email = kwargs.get('borrower_email', '').strip()
@@ -130,7 +134,8 @@ class LibraryWebsiteController(http.Controller):
             return request.redirect('/library')
 
         try:
-            # Create borrow request
+            # ONLY create the borrow request
+            # Do NOT change book state here
             request.env['library.borrow.request'].sudo().create({
                 'book_id': book_id,
                 'borrower_name': borrower_name,
@@ -139,17 +144,19 @@ class LibraryWebsiteController(http.Controller):
                 'return_date': return_date,
             })
 
-            # Mark book as borrowed
-            book.sudo().write({
-                'state': 'borrowed',
-                'is_available': False,
-            })
+            # ← REMOVED: book.sudo().write({...})
+            # Book state only changes when librarian approves
 
         except Exception as e:
             _logger.error('Borrow request failed: %s', str(e))
             return request.redirect(
                 f'/library/borrow/{book_id}?error=server_error'
             )
+
+        return request.redirect(
+            f'/library/borrow/success?name={borrower_name}'
+            f'&book={book.name}'
+        )
 
         # Redirect to success page
         return request.redirect(

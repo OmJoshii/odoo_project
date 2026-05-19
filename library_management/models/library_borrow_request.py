@@ -66,6 +66,10 @@ class LibraryBorrowRequest(models.Model):
     # ── Actions ──────────────────────────────────────────────
     def action_approve(self):
         self.ensure_one()
+        if self.book_id.state != 'available':
+            raise ValidationError(
+                f'"{self.book_id.name}" is no longer available!'
+            )
         self.book_id.write({
             'state': 'borrowed',
             'is_available': False,
