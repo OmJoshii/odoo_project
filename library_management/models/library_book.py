@@ -34,7 +34,11 @@ class LibraryBook(models.Model):
         ('available', 'Available'),
         ('borrowed', 'Borrowed'),
         ('lost', 'Lost'),
-    ], string='Status', default='available')
+    ], string='Status',
+       compute='_compute_state',
+       store=True,
+       readonly=False,
+       default='available')
 
     # ── Computed field ──────────────────────────────────────
     author_nationality = fields.Char(
@@ -47,6 +51,28 @@ class LibraryBook(models.Model):
         string='Short Description',
         compute='_compute_short_description',
         store=False,
+    )
+
+    # ── Copy tracking fields ─────────────────────────────────
+    copy_count = fields.Integer(
+        string='Total Copies',
+        default=1,
+        help='Total number of physical copies in the library'
+    )
+    borrowed_count = fields.Integer(
+        string='Borrowed Copies',
+        compute='_compute_borrowed_count',
+        store=True,
+    )
+    available_copies = fields.Integer(
+        string='Available Copies',
+        compute='_compute_available_copies',
+        store=True,
+    )
+    borrow_request_ids = fields.One2many(
+        comodel_name='library.borrow.request',
+        inverse_name='book_id',
+        string='Borrow Requests',
     )
 
     # ── SQL Constraints ──────────────────────────────────────
@@ -86,14 +112,41 @@ class LibraryBook(models.Model):
                 rec.short_description = 'No description available'
 
     # ── Onchange method ──────────────────────────────────────
-    @api.onchange('state')
+    """@api.onchange('state')
     def _onchange_state(self):
         if self.state == 'borrowed':
             self.is_available = False
         elif self.state == 'available':
             self.is_available = True
         elif self.state == 'lost':
-            self.is_available = False
+            self.is_available = False"""
+    
+    @api.depends('available_copies', 'copy_count')
+    def _compute_state(self):
+        for rec in self:
+            if rec.copy_count <= 0:
+                rec.state = 'lost'
+            elif rec.available_copies > 0:
+                rec.state = 'available'
+            else:
+                rec.state = 'borrowed'
+
+    @api.depends('borrow_request_ids.state')
+    def _compute_borrowed_count(self):
+        for rec in self:
+            rec.borrowed_count = self.env[
+                'library.borrow.request'
+            ].search_count([
+                ('book_id', '=', rec.id),
+                ('state', '=', 'approved'),
+            ])
+
+    @api.depends('copy_count', 'borrowed_count')
+    def _compute_available_copies(self):
+        for rec in self:
+            rec.available_copies = max(
+                0, rec.copy_count - rec.borrowed_count
+            )
 
     
     # ── Python Constraints ───────────────────────────────────
@@ -193,7 +246,7 @@ class LibraryBook(models.Model):
         compute='_compute_borrow_request_count',
     )
 
-    @api.depends()
+    @api.depends('borrow_request_ids')
     def _compute_borrow_request_count(self):
         for rec in self:
             rec.borrow_request_count = self.env[

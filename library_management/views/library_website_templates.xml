@@ -210,6 +210,25 @@
                                             <t t-esc="book.pages"/> pages
                                         </small>
                                     </t>
+                                    <div class="mt-2">
+                                        <small>
+                                            <t t-if="book.available_copies > 0">
+                                                <span class="text-success">
+                                                    <i class="fa fa-check-circle me-1"/>
+                                                    <t t-esc="book.available_copies"/>
+                                                    of
+                                                    <t t-esc="book.copy_count"/>
+                                                    copies available
+                                                </span>
+                                            </t>
+                                            <t t-else="">
+                                                <span class="text-danger">
+                                                    <i class="fa fa-times-circle me-1"/>
+                                                    All copies borrowed
+                                                </span>
+                                            </t>
+                                        </small>
+                                    </div>
                                 </div>
                                 <div class="card-footer d-flex
                                      justify-content-between
