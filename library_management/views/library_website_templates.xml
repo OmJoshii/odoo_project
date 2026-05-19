@@ -21,56 +21,97 @@
                 <!-- Stats Bar -->
                 <div class="row mb-4">
                     <div class="col-md-4 mb-3">
-                        <div t-attf-class="card text-center
-                             border-0 shadow-sm #{
+                        <div t-attf-class="card text-center border-0 shadow-sm #{
                              'border-primary border-2'
                              if active_filter == 'all' else ''}">
                             <div class="card-body py-4">
-                                <h2 class="display-4 fw-bold
-                                    text-primary">
+                                <h2 class="display-4 fw-bold text-primary">
                                     <t t-esc="total_books"/>
                                 </h2>
-                                <p class="text-muted mb-0">
-                                    Total Books
-                                </p>
+                                <p class="text-muted mb-0">Total Books</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <div t-attf-class="card text-center
-                             border-0 shadow-sm #{
+                        <div t-attf-class="card text-center border-0 shadow-sm #{
                              'border-success border-2'
-                             if active_filter == 'available'
-                             else ''}">
+                             if active_filter == 'available' else ''}">
                             <div class="card-body py-4">
-                                <h2 class="display-4 fw-bold
-                                    text-success">
+                                <h2 class="display-4 fw-bold text-success">
                                     <t t-esc="total_available"/>
                                 </h2>
-                                <p class="text-muted mb-0">
-                                    Available Now
-                                </p>
+                                <p class="text-muted mb-0">Available Now</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <div t-attf-class="card text-center
-                             border-0 shadow-sm #{
+                        <div t-attf-class="card text-center border-0 shadow-sm #{
                              'border-warning border-2'
-                             if active_filter == 'borrowed'
-                             else ''}">
+                             if active_filter == 'borrowed' else ''}">
                             <div class="card-body py-4">
-                                <h2 class="display-4 fw-bold
-                                    text-warning">
+                                <h2 class="display-4 fw-bold text-warning">
                                     <t t-esc="total_borrowed"/>
                                 </h2>
-                                <p class="text-muted mb-0">
-                                    Currently Borrowed
-                                </p>
+                                <p class="text-muted mb-0">Currently Borrowed</p>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Search Bar -->
+                <div class="row mb-4">
+                    <div class="col-md-8 mx-auto">
+                        <form method="GET" action="/library">
+                            <div class="input-group input-group-lg shadow-sm">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fa fa-search text-muted"/>
+                                </span>
+                                <input
+                                    type="text"
+                                    name="search"
+                                    class="form-control border-start-0 ps-0"
+                                    placeholder="Search by title or author..."
+                                    t-att-value="search"/>
+                                <t t-if="book_filter and book_filter != 'all'">
+                                    <input type="hidden"
+                                           name="book_filter"
+                                           t-att-value="book_filter"/>
+                                </t>
+                                <button type="submit"
+                                        class="btn btn-primary px-4">
+                                    Search
+                                </button>
+                                <t t-if="search">
+                                    <a href="/library"
+                                       class="btn btn-outline-secondary">
+                                        ✕ Clear
+                                    </a>
+                                </t>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Search results info -->
+                <t t-if="search">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <p class="text-muted">
+                                <t t-if="search_count > 0">
+                                    Found
+                                    <strong><t t-esc="search_count"/></strong>
+                                    result(s) for
+                                    "<strong><t t-esc="search"/></strong>"
+                                </t>
+                                <t t-else="">
+                                    No results found for
+                                    "<strong><t t-esc="search"/></strong>"
+                                    — <a href="/library">clear search</a>
+                                </t>
+                            </p>
+                        </div>
+                    </div>
+                </t>
 
                 <!-- Filter Tabs -->
                 <div class="row mb-4">
@@ -81,10 +122,11 @@
                                        'active fw-bold'
                                        if active_filter == 'all'
                                        else ''}"
-                                   href="/library">
+                                   t-attf-href="/library#{
+                                       '?search=' + search
+                                       if search else ''}">
                                     All Books
-                                    <span class="badge
-                                          bg-secondary ms-1">
+                                    <span class="badge bg-secondary ms-1">
                                         <t t-esc="total_books"/>
                                     </span>
                                 </a>
@@ -94,10 +136,11 @@
                                        'active fw-bold'
                                        if active_filter == 'available'
                                        else ''}"
-                                   href="/library?book_filter=available">
+                                   t-attf-href="/library?book_filter=available#{
+                                       '&amp;search=' + search
+                                       if search else ''}">
                                     Available
-                                    <span class="badge
-                                          bg-success ms-1">
+                                    <span class="badge bg-success ms-1">
                                         <t t-esc="total_available"/>
                                     </span>
                                 </a>
@@ -107,10 +150,11 @@
                                        'active fw-bold'
                                        if active_filter == 'borrowed'
                                        else ''}"
-                                   href="/library?book_filter=borrowed">
+                                   t-attf-href="/library?book_filter=borrowed#{
+                                       '&amp;search=' + search
+                                       if search else ''}">
                                     Borrowed
-                                    <span class="badge
-                                          bg-warning text-dark ms-1">
+                                    <span class="badge bg-warning text-dark ms-1">
                                         <t t-esc="total_borrowed"/>
                                     </span>
                                 </a>
@@ -136,8 +180,7 @@
                                         </span>
                                     </t>
                                     <t t-elif="book.state == 'borrowed'">
-                                        <span class="badge bg-warning
-                                              text-dark">
+                                        <span class="badge bg-warning text-dark">
                                             Borrowed
                                         </span>
                                     </t>
@@ -151,8 +194,7 @@
                                     <h5 class="card-title">
                                         <t t-esc="book.name"/>
                                     </h5>
-                                    <p class="card-text
-                                       text-muted mb-1">
+                                    <p class="card-text text-muted mb-1">
                                         <t t-if="book.author_id">
                                             <i class="fa fa-user me-1"/>
                                             <t t-esc="book.author_id.name"/>
@@ -176,8 +218,7 @@
                                         Rs. <t t-esc="book.price"/>
                                     </strong>
                                     <a t-attf-href="/library/book/#{book.id}"
-                                       class="btn btn-sm
-                                              btn-outline-primary">
+                                       class="btn btn-sm btn-outline-primary">
                                         View Details →
                                     </a>
                                 </div>
@@ -188,9 +229,21 @@
                     <!-- Empty state -->
                     <t t-if="not books">
                         <div class="col-12 text-center py-5">
-                            <i class="fa fa-book fa-4x
-                               text-muted mb-3"/>
-                            <t t-if="active_filter == 'available'">
+                            <i class="fa fa-search fa-4x text-muted mb-3"/>
+                            <t t-if="search">
+                                <h4 class="text-muted">
+                                    No books found for
+                                    "<t t-esc="search"/>"
+                                </h4>
+                                <p class="text-muted">
+                                    Try a different search term
+                                </p>
+                                <a href="/library"
+                                   class="btn btn-primary mt-2">
+                                    Clear Search
+                                </a>
+                            </t>
+                            <t t-elif="active_filter == 'available'">
                                 <h4 class="text-muted">
                                     No books available right now
                                 </h4>

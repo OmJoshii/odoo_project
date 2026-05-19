@@ -8,15 +8,23 @@ _logger = logging.getLogger(__name__)
 class LibraryWebsiteController(http.Controller):
 
     @http.route('/library', type='http', auth='public', website=True)
-    def library_home(self, book_filter=None, **kwargs):
+    def library_home(self, book_filter=None, search=None, **kwargs):
         """
-        Public catalogue page — shows all books
-        with live counts and filter support
+        Public catalogue page — with search and filter support
         """
-        # Always fetch ALL books for counts
+        # Build search domain
+        domain = []
+        if search:
+            domain = [
+                '|',
+                ('name', 'ilike', search),
+                ('author_id.name', 'ilike', search),
+            ]
+
+        # Fetch ALL books for counts (no search applied)
         all_books = request.env['library.book'].sudo().search([])
 
-        # Calculate live counts
+        # Calculate live counts from all books
         total_books = len(all_books)
         total_available = len(all_books.filtered(
             lambda b: b.state == 'available'
@@ -25,19 +33,22 @@ class LibraryWebsiteController(http.Controller):
             lambda b: b.state == 'borrowed'
         ))
 
-        # Apply filter for display
+        # Fetch books with search domain applied
+        searched_books = request.env['library.book'].sudo().search(domain)
+
+        # Apply filter on top of search results
         if book_filter == 'available':
-            books = all_books.filtered(
+            books = searched_books.filtered(
                 lambda b: b.state == 'available'
             )
             active_filter = 'available'
         elif book_filter == 'borrowed':
-            books = all_books.filtered(
+            books = searched_books.filtered(
                 lambda b: b.state == 'borrowed'
             )
             active_filter = 'borrowed'
         else:
-            books = all_books
+            books = searched_books
             active_filter = 'all'
 
         return request.render(
@@ -48,6 +59,8 @@ class LibraryWebsiteController(http.Controller):
                 'total_available': total_available,
                 'total_borrowed': total_borrowed,
                 'active_filter': active_filter,
+                'search': search or '',
+                'search_count': len(books),
             }
         )
 
