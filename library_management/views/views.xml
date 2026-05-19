@@ -10,10 +10,10 @@
                 <field name="name"/>
                 <field name="author_id"/>
                 <field name="isbn"/>
-                <field name="pages"/>
+                <field name="copy_count"/>
+                <field name="available_copies"/>
                 <field name="price"/>
                 <field name="state"/>
-                <field name="is_available"/>
             </list>
         </field>
     </record>
@@ -86,7 +86,7 @@
                         type="object"
                         name="action_open_borrow_wizard"
                         class="btn-primary"
-                        invisible="state != 'available'"/>
+                        invisible="available_copies &lt;= 0"/>
                     <button
                         string="Return Book"
                         type="object"
@@ -125,6 +125,9 @@
                         <group string="Details">
                             <field name="pages"/>
                             <field name="price"/>
+                            <field name="copy_count"/>
+                            <field name="borrowed_count"/>
+                            <field name="available_copies"/>
                             <field name="is_available"/>
                         </group>
                     </group>

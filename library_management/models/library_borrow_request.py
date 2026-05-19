@@ -66,24 +66,28 @@ class LibraryBorrowRequest(models.Model):
     # ── Actions ──────────────────────────────────────────────
     def action_approve(self):
         self.ensure_one()
-        if self.book_id.state != 'available':
+        if self.book_id.available_copies <= 0:
             raise ValidationError(
-                f'"{self.book_id.name}" is no longer available!'
+                f'No copies of "{self.book_id.name}" '
+                f'are available for borrowing!'
             )
-        self.book_id.write({
-            'state': 'borrowed',
-            'is_available': False,
-        })
         self.write({'state': 'approved'})
+        # Recompute book state based on new borrowed count
+        self.book_id._compute_borrowed_count()
+        self.book_id._compute_available_copies()
+        self.book_id._compute_state()
+        # Notify borrower
+       # self._send_email('library_management.email_template_borrow_approved')
 
     def action_reject(self):
         self.ensure_one()
         self.write({'state': 'rejected'})
+       # self._send_email('library_management.email_template_borrow_rejected')
 
     def action_return(self):
         self.ensure_one()
-        self.book_id.write({
-            'state': 'available',
-            'is_available': True,
-        })
         self.write({'state': 'returned'})
+        # Recompute book state based on reduced borrowed count
+        self.book_id._compute_borrowed_count()
+        self.book_id._compute_available_copies()
+        self.book_id._compute_state()
