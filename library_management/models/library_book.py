@@ -187,3 +187,25 @@ class LibraryBook(models.Model):
         return self.env.ref(
             'library_management.action_report_library_book'
         ).report_action(self)
+    
+    borrow_request_count = fields.Integer(
+        string='Borrow Requests',
+        compute='_compute_borrow_request_count',
+    )
+
+    @api.depends()
+    def _compute_borrow_request_count(self):
+        for rec in self:
+            rec.borrow_request_count = self.env[
+                'library.borrow.request'
+            ].search_count([('book_id', '=', rec.id)])
+
+    def action_view_borrow_requests(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Borrow Requests',
+            'res_model': 'library.borrow.request',
+            'view_mode': 'list,form',
+            'domain': [('book_id', '=', self.id)],
+        }
