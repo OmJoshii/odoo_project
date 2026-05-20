@@ -171,12 +171,6 @@ class LibraryWebsiteController(http.Controller):
             f'&book={book.name}'
         )
 
-        # Redirect to success page
-        return request.redirect(
-            f'/library/borrow/success?name={borrower_name}'
-            f'&book={book.name}'
-        )
-
     # ── NEW: Success page ─────────────────────────────────────
     @http.route(
         '/library/borrow/success',
