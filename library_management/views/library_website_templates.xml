@@ -416,12 +416,6 @@
                                                         <t t-esc="book.copy_count"/>
                                                     </td>
                                                 </tr>
-                                                <tr>
-                                                    <th>Nationality</th>
-                                                    <td>
-                                                        <t t-esc="book.author_nationality or 'N/A'"/>
-                                                    </td>
-                                                </tr>
                                             </tbody>
                                         </table>
                                         <t t-if="book.description">
