@@ -212,25 +212,26 @@ class LibraryBook(models.Model):
     # ── Scheduled Action Methods ─────────────────────────────
     @api.model
     def action_check_overdue_books(self):
-        """
-        Runs daily — finds all borrowed books and
-        logs a warning. In production you would
-        send emails or create activities here.
-        """
         today = fields.Date.today()
-        borrowed_books = self.search([
-            ('state', '=', 'borrowed'),
-        ])
-        overdue_count = 0
-        for book in borrowed_books:
-            overdue_count += 1
-
-        # Log to Odoo server logs
         import logging
         _logger = logging.getLogger(__name__)
+
+        # Find all approved requests past return date
+        overdue_requests = self.env[
+            'library.borrow.request'
+        ].search([
+            ('state', '=', 'approved'),
+            ('return_date', '<', today),
+        ])
+
+        # Trigger fine recompute on each overdue request
+        for req in overdue_requests:
+            req._compute_fine()
+
         _logger.info(
-            'Library cron: %d borrowed book(s) checked on %s',
-            overdue_count,
+            'Library cron: %d overdue request(s) '
+            'found and fines updated on %s',
+            len(overdue_requests),
             today,
         )
         return True 
