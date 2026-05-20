@@ -7,6 +7,10 @@
         <field name="model">library.book</field>
         <field name="arch" type="xml">
             <list string="Books">
+                <field name="cover_image_small"
+                       widget="image"
+                       string="Cover"
+                       options="{'size': [38, 38]}"/>
                 <field name="name"/>
                 <field name="author_id"/>
                 <field name="isbn"/>
@@ -114,23 +118,33 @@
                     </button>
                 </div>
                 <sheet>
-                    <group>
-                        <group string="Book Information">
-                            <field name="name"/>
-                            <field name="author_id"/>
-                            <field name="author_nationality"/>
-                            <field name="isbn"/>
-                            <field name="date_published"/>
-                        </group>
-                        <group string="Details">
-                            <field name="pages"/>
-                            <field name="price"/>
-                            <field name="copy_count"/>
-                            <field name="borrowed_count"/>
-                            <field name="available_copies"/>
-                            <field name="is_available"/>
-                        </group>
-                    </group>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <field name="cover_image"
+                                   widget="image"
+                                   class="img-fluid rounded shadow-sm"
+                                   options="{'size': [300, 400]}"/>
+                        </div>
+                        <div class="col-md-9">
+                            <group>
+                                <group string="Book Information">
+                                    <field name="name"/>
+                                    <field name="author_id"/>
+                                    <field name="author_nationality"/>
+                                    <field name="isbn"/>
+                                    <field name="date_published"/>
+                                </group>
+                                <group string="Details">
+                                    <field name="pages"/>
+                                    <field name="price"/>
+                                    <field name="copy_count"/>
+                                    <field name="borrowed_count"/>
+                                    <field name="available_copies"/>
+                                    <field name="is_available"/>
+                                </group>
+                            </group>
+                        </div>
+                    </div>
                     <group string="Categories">
                         <field name="category_ids"
                                widget="many2many_tags"

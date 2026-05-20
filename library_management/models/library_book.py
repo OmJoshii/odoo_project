@@ -30,6 +30,20 @@ class LibraryBook(models.Model):
     is_available = fields.Boolean(string='Is Available', default=True)
     date_published = fields.Date(string='Published Date')
     description = fields.Text(string='Description')
+
+    # ── Cover image ──────────────────────────────────────────
+    cover_image = fields.Image(
+        string='Cover Image',
+        max_width=800,
+        max_height=1200,
+    )
+    cover_image_small = fields.Image(
+        string='Cover Image (Small)',
+        related='cover_image',
+        max_width=128,
+        max_height=128,
+        store=True,
+    )
     state = fields.Selection([
         ('available', 'Available'),
         ('borrowed', 'Borrowed'),
