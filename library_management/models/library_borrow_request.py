@@ -44,6 +44,26 @@ class LibraryBorrowRequest(models.Model):
 
     notes = fields.Text(string='Notes')
 
+    # ── Fine tracking ────────────────────────────────────────
+    fine_per_day = fields.Float(
+        string='Fine Per Day (Rs.)',
+        default=10.0,
+    )
+    overdue_days = fields.Integer(
+        string='Overdue Days',
+        compute='_compute_fine',
+        store=True,
+    )
+    fine_amount = fields.Float(
+        string='Fine Amount (Rs.)',
+        compute='_compute_fine',
+        store=True,
+    )
+    fine_paid = fields.Boolean(
+        string='Fine Paid',
+        default=False,
+    )
+
     # ── Auto generate reference number ───────────────────────
     @api.model_create_multi
     def create(self, vals_list):
@@ -55,6 +75,20 @@ class LibraryBorrowRequest(models.Model):
         return super().create(vals_list)
 
     # ── Constraints ──────────────────────────────────────────
+
+    @api.depends('return_date', 'state', 'fine_per_day')
+    def _compute_fine(self):
+        today = fields.Date.today()
+        for rec in self:
+            if (rec.state == 'approved' and
+                    rec.return_date and
+                    rec.return_date < today):
+                delta = today - rec.return_date
+                rec.overdue_days = delta.days
+                rec.fine_amount = delta.days * rec.fine_per_day
+            else:
+                rec.overdue_days = 0
+                rec.fine_amount = 0.0
     @api.constrains('borrow_date', 'return_date')
     def _check_dates(self):
         for rec in self:

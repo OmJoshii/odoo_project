@@ -429,16 +429,19 @@
         <field name="model">library.borrow.request</field>
         <field name="arch" type="xml">
             <list string="Borrow Requests"
-                  decoration-success="state == 'approved'"
+                  decoration-success="state == 'approved' and overdue_days == 0"
                   decoration-warning="state == 'pending'"
-                  decoration-danger="state == 'rejected'"
-                  decoration-muted="state == 'returned'">
+                  decoration-danger="state == 'approved' and overdue_days &gt; 0"
+                  decoration-muted="state in ('returned', 'rejected')">
                 <field name="name"/>
                 <field name="borrower_name"/>
                 <field name="borrower_email"/>
                 <field name="book_id"/>
                 <field name="borrow_date"/>
                 <field name="return_date"/>
+                <field name="overdue_days"/>
+                <field name="fine_amount"/>
+                <field name="fine_paid"/>
                 <field name="state"
                        widget="badge"
                        decoration-success="state == 'approved'"
@@ -496,6 +499,19 @@
                             <field name="return_date"/>
                         </group>
                     </group>
+
+                    <group string="Fine Details"
+                           invisible="overdue_days &lt;= 0">
+                        <group>
+                            <field name="overdue_days"/>
+                            <field name="fine_per_day"/>
+                            <field name="fine_amount"/>
+                        </group>
+                        <group>
+                            <field name="fine_paid"/>
+                        </group>
+                    </group>
+
                     <group string="Notes">
                         <field name="notes" nolabel="1"/>
                     </group>
