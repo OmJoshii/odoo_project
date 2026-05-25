@@ -24,9 +24,7 @@
                eval="[(4, ref('group_library_librarian'))]"/>
     </record>
 
-    <!-- ============================================================
-         RECORD RULES
-    ============================================================ -->
+    <!--   RECORD RULES  -->
 
     <!-- Users can only see non-lost books -->
     <record id="rule_library_book_user" model="ir.rule">

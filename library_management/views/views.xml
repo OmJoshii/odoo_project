@@ -617,4 +617,102 @@
         </field>
     </record>
 
+
+    <!-- ============================================================
+         API KEY — LIST VIEW
+    ============================================================ -->
+    <record id="view_library_api_key_list" model="ir.ui.view">
+        <field name="name">library.api.key.list</field>
+        <field name="model">library.api.key</field>
+        <field name="arch" type="xml">
+            <list string="API Keys"
+                  decoration-muted="not is_active">
+                <field name="name"/>
+                <field name="key_preview"/>
+                <field name="is_active"/>
+                <field name="last_used"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+    <!--  API KEY — FORM VIEW   -->
+    <record id="view_library_api_key_form" model="ir.ui.view">
+        <field name="name">library.api.key.form</field>
+        <field name="model">library.api.key</field>
+        <field name="arch" type="xml">
+            <form string="API Key">
+                <header>
+                    <button
+                        string="Generate New Key"
+                        type="object"
+                        name="action_generate_key"
+                        class="btn-primary"
+                        invisible="key_hash != False"/>
+                    <button
+                        string="Regenerate Key"
+                        type="object"
+                        name="action_generate_key"
+                        class="btn-secondary"
+                        invisible="key_hash == False"/>
+                    <button
+                        string="Deactivate"
+                        type="object"
+                        name="action_deactivate"
+                        class="btn-danger"
+                        invisible="not is_active"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Key Information">
+                            <field name="name"/>
+                            <field name="key_preview"/>
+                            <field name="is_active"/>
+                            <field name="last_used"/>
+                        </group>
+                        <group string="Notes">
+                            <field name="note" nolabel="1"/>
+                        </group>
+                    </group>
+                    <div class="alert alert-warning mt-3"
+                         invisible="key_hash != False">
+                        <i class="fa fa-exclamation-triangle me-2"/>
+                        <strong>No key generated yet.</strong>
+                        Click "Generate New Key" to create one.
+                    </div>
+                    <div class="alert alert-info mt-3"
+                         invisible="key_hash == False">
+                        <i class="fa fa-info-circle me-2"/>
+                        The full API key was shown once when generated.
+                        If you lost it, click "Regenerate Key" to create a new one.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!--  API KEY — WINDOW ACTION  -->
+    <record id="action_library_api_keys"
+            model="ir.actions.act_window">
+        <field name="name">API Keys</field>
+        <field name="res_model">library.api.key</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!--   API KEY — MENU   -->
+    <menuitem
+        id="menu_library_config_section"
+        name="Configuration"
+        parent="menu_library_root"
+        sequence="40"
+        groups="library_management.group_library_manager"/>
+
+    <menuitem
+        id="menu_library_api_keys"
+        name="API Keys"
+        parent="menu_library_config_section"
+        action="action_library_api_keys"
+        sequence="10"
+        groups="library_management.group_library_manager"/>
+
 </odoo>
