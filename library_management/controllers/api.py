@@ -104,6 +104,36 @@ class LibraryApiController(http.Controller):
                          if book.cover_image else None,
         }
     
+    # ── Helper: Convert borrow request to dict ────────────────
+    def _request_to_dict(self, req):
+        """
+        Converts a library.borrow.request record
+        into a plain dictionary for JSON response.
+        """
+        return {
+            'id': req.id,
+            'reference': req.name,
+            'borrower_name': req.borrower_name,
+            'borrower_email': req.borrower_email,
+            'book': {
+                'id': req.book_id.id,
+                'name': req.book_id.name,
+                'author': req.book_id.author_id.name
+                          if req.book_id.author_id
+                          else None,
+            },
+            'borrow_date': str(req.borrow_date)
+                           if req.borrow_date else None,
+            'return_date': str(req.return_date)
+                           if req.return_date else None,
+            'state': req.state,
+            'overdue_days': req.overdue_days,
+            'fine_amount': req.fine_amount,
+            'fine_paid': req.fine_paid,
+            'created_on': str(req.create_date)
+                          if req.create_date else None,
+        }
+    
     # First Endpoint: List all Books
     @http.route(
         '/api/library/books',
@@ -274,4 +304,254 @@ class LibraryApiController(http.Controller):
                     'active_borrows': active_borrows,
                 },
             }
+        })
+    
+    # POST borrow request endpoint
+    @http.route(
+        '/api/library/borrow',
+        type='http',
+        auth='none',
+        methods=['POST'],
+        csrf=False,
+    )
+    def api_create_borrow(self, **kwargs):
+        """
+        POST /api/library/borrow
+
+        Submits a new borrow request.
+        Requires X-API-Key header.
+        Requires JSON body with:
+          - book_id (integer)
+          - borrower_name (string)
+          - borrower_email (string)
+          - borrow_date (string: YYYY-MM-DD)
+          - return_date (string: YYYY-MM-DD)
+        """
+        # Step 1 — Validate API key
+        if not self._validate_key():
+            return self._unauthorized()
+
+        # Step 2 — Read JSON body
+        try:
+            body = json.loads(
+                request.httprequest.data.decode('utf-8')
+            )
+        except (json.JSONDecodeError, Exception):
+            return self._bad_request(
+                'Request body must be valid JSON'
+            )
+
+        # Step 3 — Extract and validate required fields
+        book_id = body.get('book_id')
+        borrower_name = body.get('borrower_name', '').strip()
+        borrower_email = body.get('borrower_email', '').strip()
+        borrow_date = body.get('borrow_date')
+        return_date = body.get('return_date')
+
+        # Check all required fields present
+        missing = []
+        if not book_id:
+            missing.append('book_id')
+        if not borrower_name:
+            missing.append('borrower_name')
+        if not borrower_email:
+            missing.append('borrower_email')
+        if not borrow_date:
+            missing.append('borrow_date')
+        if not return_date:
+            missing.append('return_date')
+
+        if missing:
+            return self._bad_request(
+                f'Missing required fields: '
+                f'{", ".join(missing)}'
+            )
+
+        # Validate email format
+        if '@' not in borrower_email:
+            return self._bad_request(
+                'Invalid email address format'
+            )
+
+        # Step 4 — Validate dates
+        from datetime import date
+        try:
+            borrow = date.fromisoformat(borrow_date)
+            ret = date.fromisoformat(return_date)
+        except ValueError:
+            return self._bad_request(
+                'Dates must be in YYYY-MM-DD format'
+            )
+
+        if ret <= borrow:
+            return self._bad_request(
+                'Return date must be after borrow date'
+            )
+
+        # Step 5 — Check book exists and is available
+        book = request.env[
+            'library.book'
+        ].sudo().browse(int(book_id))
+
+        if not book.exists():
+            return self._not_found(
+                f'Book with ID {book_id} not found'
+            )
+
+        if book.available_copies <= 0:
+            return self._json_response({
+                'status': 'error',
+                'code': 409,
+                'message': f'No copies of "{book.name}" '
+                           f'are available for borrowing',
+            }, status=409)
+
+        # Step 6 — Create the borrow request
+        try:
+            borrow_request = request.env[
+                'library.borrow.request'
+            ].sudo().create({
+                'book_id': int(book_id),
+                'borrower_name': borrower_name,
+                'borrower_email': borrower_email,
+                'borrow_date': borrow_date,
+                'return_date': return_date,
+            })
+        except Exception as e:
+            _logger.error(
+                'API borrow request creation failed: %s',
+                str(e)
+            )
+            return self._json_response({
+                'status': 'error',
+                'code': 500,
+                'message': 'Failed to create borrow request. '
+                           'Please try again.',
+            }, status=500)
+
+        # Step 7 — Return success response
+        return self._json_response({
+            'status': 'success',
+            'code': 201,
+            'message': f'Borrow request submitted successfully. '
+                       f'Reference: {borrow_request.name}',
+            'data': self._request_to_dict(borrow_request),
+        }, status=201)
+    
+    # GET requests by email endpoint
+    @http.route(
+        '/api/library/requests',
+        type='http',
+        auth='none',
+        methods=['GET'],
+        csrf=False,
+    )
+    def api_get_requests(self, **kwargs):
+        """
+        GET /api/library/requests?email=om@example.com
+        GET /api/library/requests?email=x&state=pending
+
+        Returns borrow requests for a given email.
+        Requires X-API-Key header.
+        """
+        # Step 1 — Validate API key
+        if not self._validate_key():
+            return self._unauthorized()
+
+        # Step 2 — Get and validate email parameter
+        email = kwargs.get('email', '').strip()
+        state = kwargs.get('state')
+
+        if not email:
+            return self._bad_request(
+                'email parameter is required. '
+                'Use ?email=your@email.com'
+            )
+
+        if '@' not in email:
+            return self._bad_request(
+                'Invalid email address format'
+            )
+
+        # Step 3 — Build domain
+        domain = [('borrower_email', '=', email)]
+
+        if state:
+            valid_states = [
+                'pending', 'approved',
+                'returned', 'rejected'
+            ]
+            if state not in valid_states:
+                return self._bad_request(
+                    f'Invalid state. Must be one of: '
+                    f'{", ".join(valid_states)}'
+                )
+            domain.append(('state', '=', state))
+
+        # Step 4 — Fetch requests
+        requests_records = request.env[
+            'library.borrow.request'
+        ].sudo().search(
+            domain,
+            order='create_date desc',
+        )
+
+        # Step 5 — Return response
+        return self._json_response({
+            'status': 'success',
+            'code': 200,
+            'email': email,
+            'total': len(requests_records),
+            'data': [
+                self._request_to_dict(r)
+                for r in requests_records
+            ],
+        })
+    
+    # GET single request endpoint
+    @http.route(
+        '/api/library/requests/detail',
+        type='http',
+        auth='none',
+        methods=['GET'],
+        csrf=False,
+    )
+    def api_get_request(self, **kwargs):
+        """
+        GET /api/library/requests/detail?ref=BRW/0001
+
+        Returns details of one specific borrow request.
+        Requires X-API-Key header.
+        """
+        
+
+        if not self._validate_key():
+            return self._unauthorized()
+
+        # Read reference from query parameter
+        reference = kwargs.get('ref', '').strip()
+
+        if not reference:
+            return self._bad_request(
+                'ref parameter is required. '
+                'Use ?ref=BRW/0001'
+            )
+
+        # Find by reference number
+        borrow_request = request.env[
+            'library.borrow.request'
+        ].sudo().search([
+            ('name', '=', reference)
+        ], limit=1)
+
+        if not borrow_request:
+            return self._not_found(
+                f'Request with reference '
+                f'"{reference}" not found'
+            )
+
+        return self._json_response({
+            'status': 'success',
+            'code': 200,
+            'data': self._request_to_dict(borrow_request),
         })

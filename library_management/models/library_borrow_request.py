@@ -67,12 +67,22 @@ class LibraryBorrowRequest(models.Model):
     # ── Auto generate reference number ───────────────────────
     @api.model_create_multi
     def create(self, vals_list):
+        import logging
+        _log = logging.getLogger(__name__)
         for vals in vals_list:
             if vals.get('name', 'New') == 'New':
-                vals['name'] = self.env['ir.sequence'].next_by_code(
-                    'library.borrow.request'
-                ) or 'New'
+                seq = self.env[
+                    'ir.sequence'
+                ].sudo().next_by_code(
+                    'library_borrow_request'
+                )
+                _log.info('SEQUENCE RESULT: %s', seq)
+                vals['name'] = seq or self._generate_ref()
         return super().create(vals_list)
+
+    def _generate_ref(self):
+        count = self.sudo().search_count([])
+        return f'BRW/{(count + 1):04d}'
 
     # ── Constraints ──────────────────────────────────────────
 

@@ -3,7 +3,7 @@
     <record id="sequence_library_borrow_request"
             model="ir.sequence">
         <field name="name">Library Borrow Request</field>
-        <field name="code">library.borrow.request</field>
+        <field name="code">library_borrow_request</field>
         <field name="prefix">BRW/</field>
         <field name="padding">4</field>
         <field name="number_next">1</field>
