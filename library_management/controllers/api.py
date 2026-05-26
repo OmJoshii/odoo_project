@@ -67,6 +67,46 @@ class LibraryApiController(http.Controller):
             'message': message,
         }, status=400)
     
+    # ── Helper: Safe execution wrapper ───────────────────────
+    def _safe_execute(self, func, *args, **kwargs):
+        """
+        Wraps any controller method in a try/except.
+        If anything unexpected crashes, returns a
+        clean JSON 500 response instead of an ugly
+        HTML error page.
+        """
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            _logger.error(
+                'Library API unexpected error: %s',
+                str(e),
+                exc_info=True,
+            )
+            return self._json_response({
+                'status': 'error',
+                'code': 500,
+                'message': 'An unexpected server error occurred. '
+                           'Please try again later.',
+            }, status=500)
+    
+    # ── Helper: Log every API request ────────────────────────
+    def _log_request(self, endpoint):
+        """
+        Logs every incoming API request.
+        Useful for monitoring and debugging.
+        """
+        ip = request.httprequest.remote_addr
+        method = request.httprequest.method
+        url = request.httprequest.url
+        _logger.info(
+            'Library API [%s] %s %s from %s',
+            endpoint,
+            method,
+            url,
+            ip,
+        )
+    
     # ── Helper: Convert book record to dict ──────────────────
     def _book_to_dict(self, book):
         """
@@ -134,6 +174,55 @@ class LibraryApiController(http.Controller):
                           if req.create_date else None,
         }
     
+    @http.route(
+        '/api/library/health',
+        type='http',
+        auth='none',
+        methods=['GET'],
+        csrf=False,
+    )
+    def api_health_check(self, **kwargs):
+        """
+        GET /api/library/health
+
+        Public endpoint — no API key required.
+        Returns server status and basic info.
+        Mobile apps use this to check if server is up.
+        """
+        self._log_request('health_check')
+
+        # Test database connection
+        try:
+            book_count = request.env[
+                'library.book'
+            ].sudo().search_count([])
+            db_status = 'connected'
+        except Exception:
+            db_status = 'error'
+            book_count = 0
+
+        from datetime import datetime
+        return self._json_response({
+            'status': 'success',
+            'code': 200,
+            'service': 'Library Management API',
+            'version': '19.0.1.0.0',
+            'database': db_status,
+            'total_books': book_count,
+            'timestamp': datetime.now().isoformat(),
+            'endpoints': {
+                'health': '/api/library/health',
+                'books': '/api/library/books',
+                'book_detail': '/api/library/books/<id>',
+                'stats': '/api/library/stats',
+                'borrow': '/api/library/borrow',
+                'requests':
+                    '/api/library/requests?email=x',
+                'request_detail':
+                    '/api/library/requests/detail?ref=BRW/0001',
+            }
+        })
+    
     # First Endpoint: List all Books
     @http.route(
         '/api/library/books',
@@ -152,6 +241,9 @@ class LibraryApiController(http.Controller):
         Returns a list of books with optional filtering.
         Requires X-API-Key header.
         """
+
+        self._log_request('get_books')
+
         # Step 1 — Validate API key
         if not self._validate_key():
             return self._unauthorized()
@@ -222,6 +314,9 @@ class LibraryApiController(http.Controller):
         Returns full details of one specific book.
         Requires X-API-Key header.
         """
+
+        self._log_request('get_book')
+
         # Step 1 — Validate API key
         if not self._validate_key():
             return self._unauthorized()
@@ -258,6 +353,8 @@ class LibraryApiController(http.Controller):
         available, borrowed, members, requests.
         Requires X-API-Key header.
         """
+        self._log_request('get_stats')
+
         # Step 1 — Validate API key
         if not self._validate_key():
             return self._unauthorized()
@@ -327,9 +424,19 @@ class LibraryApiController(http.Controller):
           - borrow_date (string: YYYY-MM-DD)
           - return_date (string: YYYY-MM-DD)
         """
+        self._log_request('create_borrow')
+
         # Step 1 — Validate API key
         if not self._validate_key():
             return self._unauthorized()
+        
+        # Protect against oversized payloads
+        max_size = 10 * 1024  # 10KB
+        if request.httprequest.content_length and \
+                request.httprequest.content_length > max_size:
+            return self._bad_request(
+                'Request body too large. Maximum 10KB allowed.'
+            )
 
         # Step 2 — Read JSON body
         try:
@@ -454,6 +561,8 @@ class LibraryApiController(http.Controller):
         Returns borrow requests for a given email.
         Requires X-API-Key header.
         """
+        self._log_request('get_requests')
+
         # Step 1 — Validate API key
         if not self._validate_key():
             return self._unauthorized()
@@ -523,7 +632,7 @@ class LibraryApiController(http.Controller):
         Returns details of one specific borrow request.
         Requires X-API-Key header.
         """
-        
+        self._log_request('get_request')
 
         if not self._validate_key():
             return self._unauthorized()
