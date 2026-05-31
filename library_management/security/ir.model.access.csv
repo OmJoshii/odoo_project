@@ -13,3 +13,4 @@ access_library_borrow_request_manager,library.borrow.request manager,library_man
 access_library_borrow_request_public,library.borrow.request public,library_management.model_library_borrow_request,base.group_public,0,0,1,0
 access_library_api_key_manager,library.api.key manager,library_management.model_library_api_key,library_management.group_library_manager,1,1,1,1
 access_library_api_key_librarian,library.api.key librarian,library_management.model_library_api_key,library_management.group_library_librarian,1,0,0,0
+access_library_import_wizard,library.import.wizard,library_management.model_library_import_wizard,library_management.group_library_librarian,1,1,1,1

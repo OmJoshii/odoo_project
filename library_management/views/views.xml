@@ -260,6 +260,88 @@
         </field>
     </record>
 
+    <!--       IMPORT WIZARD FORM VIEW      -->
+    <record id="view_library_import_wizard_form"
+            model="ir.ui.view">
+        <field name="name">library.import.wizard.form</field>
+        <field name="model">library.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Books from CSV">
+
+                <!-- Upload state -->
+                <group invisible="state != 'draft'">
+                    <group string="Upload CSV File">
+                        <field name="csv_file"
+                               filename="csv_filename"
+                               widget="binary"/>
+                        <field name="csv_filename"
+                               invisible="1"/>
+                    </group>
+                    <group string="CSV Format">
+                        <div class="alert alert-info">
+                            <p><strong>Required columns:</strong></p>
+                            <p><code>name, author, isbn, pages,
+                                price, date_published, description
+                            </code></p>
+                            <p>Only <strong>name</strong> is required.
+                               All other columns are optional.</p>
+                            <p>Dates must be in
+                               <strong>YYYY-MM-DD</strong> format.</p>
+                        </div>
+                    </group>
+                </group>
+
+                <!-- Results state -->
+                <group invisible="state != 'done'">
+                    <group string="Import Results">
+                        <field name="total_rows"/>
+                        <field name="success_count"/>
+                        <field name="error_count"/>
+                    </group>
+                </group>
+
+                <group string="Errors"
+                       invisible="error_count == 0 or state != 'done'">
+                    <field name="error_log" nolabel="1"/>
+                </group>
+
+                <footer>
+                    <!-- Draft state buttons -->
+                    <button string="Download Sample CSV"
+                            type="object"
+                            name="action_download_sample"
+                            class="btn-secondary"
+                            invisible="state != 'draft'"/>
+                    <button string="Import Books"
+                            type="object"
+                            name="action_import"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+
+                    <!-- Done state buttons -->
+                    <button string="View Imported Books"
+                            type="object"
+                            name="action_view_imported_books"
+                            class="btn-primary"
+                            invisible="state != 'done'
+                                       or success_count == 0"/>
+                    <button string="Close"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!--     IMPORT WIZARD ACTION    -->
+    <record id="action_library_import_wizard"
+            model="ir.actions.act_window">
+        <field name="name">Import Books from CSV</field>
+        <field name="res_model">library.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
     <!-- MENUS -->
     <menuitem id="menu_library_root"
               name="Library"
@@ -271,6 +353,14 @@
               parent="menu_library_root"
               sequence="10"
               groups="library_management.group_library_user"/>
+
+    <menuitem
+        id="menu_library_import_books"
+        name="Import Books (CSV)"
+        parent="menu_library_books_section"
+        action="action_library_import_wizard"
+        sequence="40"
+        groups="library_management.group_library_librarian"/>
 
     <menuitem id="menu_library_books"
               name="All Books"
@@ -714,5 +804,6 @@
         action="action_library_api_keys"
         sequence="10"
         groups="library_management.group_library_manager"/>
+
 
 </odoo>
