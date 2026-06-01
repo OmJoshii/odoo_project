@@ -298,6 +298,13 @@
                                created automatically if they
                                don't exist yet.
                             </p>
+                            <p>
+                               For cover images provide a
+                               direct image URL in the
+                               <strong>cover_image_url</strong>
+                               column. Free covers available at:
+                               <strong>covers.openlibrary.org</strong>
+                            </p>
                         </div>
                     </group>
                 </group>

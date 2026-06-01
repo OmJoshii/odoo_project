@@ -54,19 +54,18 @@ class LibraryImportWizard(models.TransientModel):
         """
         sample_data = (
             'name,author,isbn,pages,price,'
-            'date_published,description,categories\n'
+            'date_published,description,'
+            'categories,cover_image_url\n'
             'Harry Potter,J.K. Rowling,'
             '9780439708180,309,500.00,'
             '1997-06-26,A young wizard,'
-            '"Fiction,Fantasy"\n'
+            '"Fiction,Fantasy",'
+            'https://covers.openlibrary.org/b/isbn/9780439708180-L.jpg\n'
             'The Da Vinci Code,Dan Brown,'
             '0385504209,454,600.00,'
             '2003-03-18,A murder mystery,'
-            'Thriller\n'
-            'Clean Code,Robert Martin,'
-            '9780132350884,431,800.00,'
-            '2008-08-01,Software craftsmanship,'
-            '"Technology,Programming"\n'
+            'Thriller,'
+            'https://covers.openlibrary.org/b/isbn/0385504209-L.jpg\n'
         )
 
         # Encode as base64 for download
@@ -325,7 +324,42 @@ class LibraryImportWizard(models.TransientModel):
             if category_ids:
                 # Many2many write syntax
                 vals['category_ids'] = [(6, 0, category_ids)]
+            
+            # Handle cover_image_url
+            cover_url = cleaned.get('cover_image_url', '')
+            if cover_url:
+                try:
+                    import urllib.request
+                    import base64 as b64
 
+                    # Set a browser-like User-Agent header
+                    # Some servers block Python's default agent
+                    req = urllib.request.Request(
+                        cover_url,
+                        headers={
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        }
+                    )
+
+                    # Download the image with 10 second timeout
+                    with urllib.request.urlopen(
+                        req, timeout=10
+                    ) as response:
+                        image_data = response.read()
+
+                    # Convert to base64 for Odoo image field
+                    vals['cover_image'] = b64.b64encode(
+                        image_data
+                    ).decode('utf-8')
+
+                except Exception as e:
+                    # Don't fail the whole import if image fails
+                    # Just log a warning and continue
+                    _logger.warning(
+                        'Row %d: Could not download image '
+                        'from %s — %s',
+                        row_num, cover_url, str(e)
+                    )
         # Create the book
         return self.env['library.book'].create(vals)
 
