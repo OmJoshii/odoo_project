@@ -281,12 +281,23 @@
                         <div class="alert alert-info">
                             <p><strong>Required columns:</strong></p>
                             <p><code>name, author, isbn, pages,
-                                price, date_published, description
+                                price, date_published,
+                                description, categories
                             </code></p>
-                            <p>Only <strong>name</strong> is required.
-                               All other columns are optional.</p>
-                            <p>Dates must be in
-                               <strong>YYYY-MM-DD</strong> format.</p>
+                            <p>Only <strong>name</strong>
+                               is required. All others optional.
+                            </p>
+                            <p>Dates must be
+                               <strong>YYYY-MM-DD</strong> format.
+                            </p>
+                            <p>For multiple categories use
+                               comma separation inside quotes:
+                               <strong>"Fiction,Fantasy"</strong>
+                            </p>
+                            <p>Authors and categories are
+                               created automatically if they
+                               don't exist yet.
+                            </p>
                         </div>
                     </group>
                 </group>

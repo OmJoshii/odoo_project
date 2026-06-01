@@ -54,13 +54,19 @@ class LibraryImportWizard(models.TransientModel):
         """
         sample_data = (
             'name,author,isbn,pages,price,'
-            'date_published,description\n'
+            'date_published,description,categories\n'
             'Harry Potter,J.K. Rowling,'
             '9780439708180,309,500.00,'
-            '1997-06-26,A young wizard\n'
+            '1997-06-26,A young wizard,'
+            '"Fiction,Fantasy"\n'
             'The Da Vinci Code,Dan Brown,'
             '0385504209,454,600.00,'
-            '2003-03-18,A murder mystery\n'
+            '2003-03-18,A murder mystery,'
+            'Thriller\n'
+            'Clean Code,Robert Martin,'
+            '9780132350884,431,800.00,'
+            '2008-08-01,Software craftsmanship,'
+            '"Technology,Programming"\n'
         )
 
         # Encode as base64 for download
@@ -292,6 +298,33 @@ class LibraryImportWizard(models.TransientModel):
         description = cleaned.get('description', '')
         if description:
             vals['description'] = description
+
+        # Handle categories — comma separated values
+        categories_str = cleaned.get('categories', '')
+        if categories_str:
+            category_ids = []
+            # Split by comma and clean each category name
+            category_names = [
+                c.strip()
+                for c in categories_str.split(',')
+                if c.strip()
+            ]
+            for cat_name in category_names:
+                # Find existing category or create new one
+                category = self.env[
+                    'library.category'
+                ].search([
+                    ('name', '=', cat_name)
+                ], limit=1)
+                if not category:
+                    category = self.env[
+                        'library.category'
+                    ].create({'name': cat_name})
+                category_ids.append(category.id)
+
+            if category_ids:
+                # Many2many write syntax
+                vals['category_ids'] = [(6, 0, category_ids)]
 
         # Create the book
         return self.env['library.book'].create(vals)
