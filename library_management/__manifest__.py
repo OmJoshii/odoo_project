@@ -12,7 +12,7 @@
         - Record borrowing history
     ''',
     'author': 'Om',
-    'depends': ['base', 'website'],
+    'depends': ['base', 'website', 'mail'],
     'data': [
         'security/library_security.xml',
         'security/ir.model.access.csv',
@@ -20,6 +20,7 @@
         'views/library_report.xml',
         'views/library_website_templates.xml',
         'data/library_sequence.xml',
+        'data/library_email_templates.xml',
         'data/library_cron.xml',
     ],
     'demo': [],

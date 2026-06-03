@@ -113,25 +113,79 @@ class LibraryBorrowRequest(models.Model):
         if self.book_id.available_copies <= 0:
             raise ValidationError(
                 f'No copies of "{self.book_id.name}" '
-                f'are available for borrowing!'
+                f'are available!'
             )
         self.write({'state': 'approved'})
-        # Recompute book state based on new borrowed count
         self.book_id._compute_borrowed_count()
         self.book_id._compute_available_copies()
         self.book_id._compute_state()
-        # Notify borrower
-       # self._send_email('library_management.email_template_borrow_approved')
+
+        # ── Send approval email ───────────────────────────────
+        self._send_notification_email('approved')
 
     def action_reject(self):
         self.ensure_one()
         self.write({'state': 'rejected'})
-       # self._send_email('library_management.email_template_borrow_rejected')
+
+        # ── Send rejection email ──────────────────────────────
+        self._send_notification_email('rejected')
 
     def action_return(self):
         self.ensure_one()
         self.write({'state': 'returned'})
-        # Recompute book state based on reduced borrowed count
         self.book_id._compute_borrowed_count()
         self.book_id._compute_available_copies()
         self.book_id._compute_state()
+
+    # ── Email helper ──────────────────────────────────────────
+    def _send_notification_email(self, status):
+        """
+        Sends an email notification to the borrower.
+        status: 'approved' or 'rejected'
+        """
+        import logging
+        _logger = logging.getLogger(__name__)
+
+        # Get the right template based on status
+        if status == 'approved':
+            template_xml_id = (
+                'library_management'
+                '.email_template_borrow_approved'
+            )
+        else:
+            template_xml_id = (
+                'library_management'
+                '.email_template_borrow_rejected'
+            )
+
+        # Find the template
+        template = self.env.ref(
+            template_xml_id,
+            raise_if_not_found=False
+        )
+
+        if not template:
+            _logger.warning(
+                'Email template %s not found',
+                template_xml_id
+            )
+            return
+
+        # Send the email
+        try:
+            template.send_mail(
+                self.id,
+                force_send=True,
+            )
+            _logger.info(
+                'Email sent to %s for request %s (%s)',
+                self.borrower_email,
+                self.name,
+                status,
+            )
+        except Exception as e:
+            # Don't crash the approval if email fails
+            _logger.error(
+                'Failed to send %s email for request %s: %s',
+                status, self.name, str(e)
+            )
