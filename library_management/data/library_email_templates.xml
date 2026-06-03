@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!--  EMAIL TEMPLATE — Borrow Request Approved  -->
+    <!--   EMAIL TEMPLATE — Borrow Request Approved  -->
     <record id="email_template_borrow_approved"
             model="mail.template">
         <field name="name">
@@ -9,121 +9,86 @@
         </field>
         <field name="model_id"
                ref="library_management.model_library_borrow_request"/>
-        <field name="subject">
-            Your Borrow Request has been Approved —
-            {{ object.book_id.name }}
+        <field name="subject">Your Borrow Request is Approved — {{ object.book_id.name }}</field>
+        <field name="email_to">{{ object.borrower_email }}</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+
+                <div style="background-color: #714B67; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 24px;">
+                        Library Management
+                    </h1>
+                </div>
+
+                <div style="background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
+
+                    <h2 style="color: #2e7d32;">Your Borrow Request is Approved!</h2>
+
+                    <p>Dear <strong><t t-out="object.borrower_name"/></strong>,</p>
+
+                    <p>Great news! Your borrow request has been
+                    <strong style="color: #2e7d32;">approved</strong>.
+                    The book is ready for you.</p>
+
+                    <div style="background: white; border-left: 4px solid #714B67; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 6px 0; color: #666; font-weight: bold; width: 40%;">Reference:</td>
+                                <td style="padding: 6px 0;"><t t-out="object.name"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 0; color: #666; font-weight: bold;">Book:</td>
+                                <td style="padding: 6px 0;"><strong><t t-out="object.book_id.name"/></strong></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 0; color: #666; font-weight: bold;">Author:</td>
+                                <td style="padding: 6px 0;">
+                                    <t t-if="object.book_id.author_id">
+                                        <t t-out="object.book_id.author_id.name"/>
+                                    </t>
+                                    <t t-else="">N/A</t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 0; color: #666; font-weight: bold;">Borrow Date:</td>
+                                <td style="padding: 6px 0;"><t t-out="object.borrow_date"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 0; color: #666; font-weight: bold;">Return By:</td>
+                                <td style="padding: 6px 0;">
+                                    <strong style="color: #d32f2f;">
+                                        <t t-out="object.return_date"/>
+                                    </strong>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="background: #fff3e0; padding: 12px; border-radius: 4px; margin: 15px 0;">
+                        <p style="margin: 0; color: #e65100;">
+                            Important: Please return the book by
+                            <strong><t t-out="object.return_date"/></strong>.
+                            Late returns will incur a fine of
+                            <strong>Rs. <t t-out="object.fine_per_day"/> per day</strong>.
+                        </p>
+                    </div>
+
+                    <p style="color: #666; font-size: 14px;">
+                        If you have any questions please contact the library.
+                    </p>
+
+                    <p>Thank you,<br/>
+                    <strong>Library Management Team</strong></p>
+
+                </div>
+            </div>
         </field>
-        <field name="email_to">
-            {{ object.borrower_email }}
-        </field>
-        <field name="body_html"><![CDATA[
-<div style="font-family: Arial, sans-serif; max-width: 600px;
-            margin: 0 auto; padding: 20px;">
-
-    <div style="background-color: #714B67; padding: 20px;
-                border-radius: 8px 8px 0 0; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">
-            📚 Library Management
-        </h1>
-    </div>
-
-    <div style="background-color: #f9f9f9; padding: 30px;
-                border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
-
-        <h2 style="color: #2e7d32;">
-            ✅ Your Borrow Request is Approved!
-        </h2>
-
-        <p>Dear <strong>{{ object.borrower_name }}</strong>,</p>
-
-        <p>Great news! Your borrow request has been
-           <strong style="color: #2e7d32;">approved</strong>.
-           The book is ready for you.</p>
-
-        <div style="background: white; border-left: 4px solid #714B67;
-                    padding: 15px; margin: 20px 0;
-                    border-radius: 4px;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="padding: 6px 0; color: #666;
-                                font-weight: bold; width: 40%;">
-                        Reference:
-                    </td>
-                    <td style="padding: 6px 0;">
-                        {{ object.name }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #666;
-                                font-weight: bold;">
-                        Book:
-                    </td>
-                    <td style="padding: 6px 0;">
-                        <strong>{{ object.book_id.name }}</strong>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #666;
-                                font-weight: bold;">
-                        Author:
-                    </td>
-                    <td style="padding: 6px 0;">
-                        {{ object.book_id.author_id.name
-                           if object.book_id.author_id
-                           else 'N/A' }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #666;
-                                font-weight: bold;">
-                        Borrow Date:
-                    </td>
-                    <td style="padding: 6px 0;">
-                        {{ object.borrow_date }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #666;
-                                font-weight: bold;">
-                        Return By:
-                    </td>
-                    <td style="padding: 6px 0;">
-                        <strong style="color: #d32f2f;">
-                            {{ object.return_date }}
-                        </strong>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <div style="background: #fff3e0; padding: 12px;
-                    border-radius: 4px; margin: 15px 0;">
-            <p style="margin: 0; color: #e65100;">
-                ⚠️ <strong>Important:</strong>
-                Please return the book by
-                <strong>{{ object.return_date }}</strong>.
-                Late returns will incur a fine of
-                <strong>Rs. {{ object.fine_per_day }} per day</strong>.
-            </p>
-        </div>
-
-        <p style="color: #666; font-size: 14px;">
-            If you have any questions, please contact
-            the library.
-        </p>
-
-        <p>Thank you,<br/>
-           <strong>Library Management Team</strong>
-        </p>
-
-    </div>
-
-</div>
-        ]]></field>
         <field name="auto_delete" eval="False"/>
     </record>
 
-    <!--  EMAIL TEMPLATE — Borrow Request Rejected  -->
+
+    <!--      EMAIL TEMPLATE — Borrow Request Rejected      -->
+    
     <record id="email_template_borrow_rejected"
             model="mail.template">
         <field name="name">
@@ -131,78 +96,52 @@
         </field>
         <field name="model_id"
                ref="library_management.model_library_borrow_request"/>
-        <field name="subject">
-            Your Borrow Request — {{ object.book_id.name }}
+        <field name="subject">Your Borrow Request — {{ object.book_id.name }}</field>
+        <field name="email_to">{{ object.borrower_email }}</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+
+                <div style="background-color: #714B67; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 24px;">
+                        Library Management
+                    </h1>
+                </div>
+
+                <div style="background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;">
+
+                    <h2 style="color: #c62828;">Borrow Request Not Approved</h2>
+
+                    <p>Dear <strong><t t-out="object.borrower_name"/></strong>,</p>
+
+                    <p>Unfortunately your borrow request has been
+                    <strong style="color: #c62828;">rejected</strong>
+                    at this time.</p>
+
+                    <div style="background: white; border-left: 4px solid #c62828; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 6px 0; color: #666; font-weight: bold; width: 40%;">Reference:</td>
+                                <td style="padding: 6px 0;"><t t-out="object.name"/></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 0; color: #666; font-weight: bold;">Book:</td>
+                                <td style="padding: 6px 0;"><strong><t t-out="object.book_id.name"/></strong></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <p>You may visit our library website to browse other available books.</p>
+
+                    <p style="color: #666; font-size: 14px;">
+                        If you believe this is a mistake please contact the library directly.
+                    </p>
+
+                    <p>Thank you,<br/>
+                    <strong>Library Management Team</strong></p>
+
+                </div>
+            </div>
         </field>
-        <field name="email_to">
-            {{ object.borrower_email }}
-        </field>
-        <field name="body_html"><![CDATA[
-<div style="font-family: Arial, sans-serif; max-width: 600px;
-            margin: 0 auto; padding: 20px;">
-
-    <div style="background-color: #714B67; padding: 20px;
-                border-radius: 8px 8px 0 0; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 24px;">
-            📚 Library Management
-        </h1>
-    </div>
-
-    <div style="background-color: #f9f9f9; padding: 30px;
-                border: 1px solid #ddd;
-                border-radius: 0 0 8px 8px;">
-
-        <h2 style="color: #c62828;">
-            ❌ Borrow Request Not Approved
-        </h2>
-
-        <p>Dear <strong>{{ object.borrower_name }}</strong>,</p>
-
-        <p>Unfortunately your borrow request has been
-           <strong style="color: #c62828;">rejected</strong>
-           at this time.</p>
-
-        <div style="background: white; border-left: 4px solid #c62828;
-                    padding: 15px; margin: 20px 0;
-                    border-radius: 4px;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                    <td style="padding: 6px 0; color: #666;
-                                font-weight: bold; width: 40%;">
-                        Reference:
-                    </td>
-                    <td style="padding: 6px 0;">
-                        {{ object.name }}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #666;
-                                font-weight: bold;">
-                        Book:
-                    </td>
-                    <td style="padding: 6px 0;">
-                        <strong>{{ object.book_id.name }}</strong>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <p>You may visit our library website to browse
-           other available books.</p>
-
-        <p style="color: #666; font-size: 14px;">
-            If you believe this is a mistake, please
-            contact the library directly.
-        </p>
-
-        <p>Thank you,<br/>
-           <strong>Library Management Team</strong>
-        </p>
-
-    </div>
-
-</div>
-        ]]></field>
         <field name="auto_delete" eval="False"/>
     </record>
 
