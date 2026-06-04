@@ -137,6 +137,13 @@ class LibraryBorrowRequest(models.Model):
         self.book_id._compute_available_copies()
         self.book_id._compute_state()
 
+        # ── Notify next person on waitlist ────────────────────
+        # Only notify if the book now has available copies
+        if self.book_id.available_copies > 0:
+            self.env['library.waitlist'].notify_next_in_queue(
+                self.book_id.id
+            )
+            
     # ── Email helper ──────────────────────────────────────────
     def _send_notification_email(self, status):
         """

@@ -144,5 +144,123 @@
         </field>
         <field name="auto_delete" eval="False"/>
     </record>
+    
+    <!--     EMAIL TEMPLATE — Waitlist Notification   -->
+    <record id="email_template_waitlist_notification"
+            model="mail.template">
+        <field name="name">
+            Library: Book Available — Waitlist Notification
+        </field>
+        <field name="model_id"
+               ref="library_management.model_library_waitlist"/>
+        <field name="subject">Good News! Your Waitlisted Book is Now Available — {{ object.book_id.name }}</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif;
+                        max-width: 600px; margin: 0 auto;
+                        padding: 20px;">
+
+                <div style="background-color: #714B67;
+                            padding: 20px;
+                            border-radius: 8px 8px 0 0;
+                            text-align: center;">
+                    <h1 style="color: white; margin: 0;
+                               font-size: 24px;">
+                        Library Management
+                    </h1>
+                </div>
+
+                <div style="background-color: #f9f9f9;
+                            padding: 30px;
+                            border: 1px solid #ddd;
+                            border-radius: 0 0 8px 8px;">
+
+                    <h2 style="color: #1565c0;">
+                        Your Waitlisted Book is Available!
+                    </h2>
+
+                    <p>Dear <strong>
+                        <t t-out="object.name"/>
+                    </strong>,</p>
+
+                    <p>Great news! The book you were
+                    waiting for is now
+                    <strong style="color: #2e7d32;">
+                        available
+                    </strong>.</p>
+
+                    <div style="background: white;
+                                border-left: 4px solid #1565c0;
+                                padding: 15px; margin: 20px 0;
+                                border-radius: 4px;">
+                        <table style="width: 100%;
+                                      border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 6px 0;
+                                           color: #666;
+                                           font-weight: bold;
+                                           width: 40%;">
+                                    Book:
+                                </td>
+                                <td style="padding: 6px 0;">
+                                    <strong>
+                                        <t t-out="object.book_id.name"/>
+                                    </strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 0;
+                                           color: #666;
+                                           font-weight: bold;">
+                                    Author:
+                                </td>
+                                <td style="padding: 6px 0;">
+                                    <t t-if="object.book_id.author_id">
+                                        <t t-out="object.book_id.author_id.name"/>
+                                    </t>
+                                    <t t-else="">N/A</t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 0;
+                                           color: #666;
+                                           font-weight: bold;">
+                                    Your Position:
+                                </td>
+                                <td style="padding: 6px 0;">
+                                    <strong>
+                                        #<t t-out="object.position"/>
+                                    </strong>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="background: #e8f5e9;
+                                padding: 12px;
+                                border-radius: 4px;
+                                margin: 15px 0;">
+                        <p style="margin: 0; color: #1b5e20;">
+                            Please visit the library or
+                            submit a borrow request on our
+                            website as soon as possible to
+                            secure this book.
+                        </p>
+                    </div>
+
+                    <p style="color: #666; font-size: 14px;">
+                        If you no longer need this book
+                        please let us know.
+                    </p>
+
+                    <p>Thank you,<br/>
+                    <strong>Library Management Team</strong>
+                    </p>
+
+                </div>
+            </div>
+        </field>
+        <field name="auto_delete" eval="False"/>
+    </record>
 
 </odoo>

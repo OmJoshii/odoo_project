@@ -451,15 +451,21 @@
                                     </a>
                                 </t>
                                 <t t-else="">
-                                    <i class="fa fa-times-circle
+                                    <i class="fa fa-clock-o
                                        fa-3x text-warning mb-3"/>
-                                    <h5>Not available</h5>
+                                    <h5>Not available right now</h5>
                                     <p class="text-muted small">
                                         This book is currently
                                         <t t-esc="book.state"/>
                                     </p>
+                                    <a t-attf-href="/library/waitlist/#{book.id}"
+                                       class="btn btn-warning
+                                              text-dark fw-bold
+                                              btn-lg w-100 mb-2">
+                                        Join Waitlist
+                                    </a>
                                     <a href="/library"
-                                       class="btn btn-outline-primary
+                                       class="btn btn-outline-secondary
                                               w-100">
                                         Browse Other Books
                                     </a>
@@ -623,9 +629,7 @@
         </t>
     </template>
 
-    <!-- ============================================================
-         SUCCESS PAGE — /library/borrow/success
-    ============================================================ -->
+    <!--     SUCCESS PAGE — /library/borrow/success    -->
     <template id="template_library_borrow_success"
               name="Borrow Success">
         <t t-call="website.layout">
@@ -662,6 +666,192 @@
                             </div>
                         </div>
 
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!--     WAITLIST FORM PAGE     -->
+    <template id="template_library_waitlist_form"
+              name="Library Waitlist Form">
+        <t t-call="website.layout">
+            <div class="container mt-4 mb-5">
+
+                <div class="mb-4">
+                    <a t-attf-href="/library/book/#{book.id}"
+                       class="btn btn-outline-secondary">
+                        ← Back to Book
+                    </a>
+                </div>
+
+                <div class="row justify-content-center">
+                    <div class="col-md-7">
+
+                        <!-- Book info -->
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-body d-flex
+                                 align-items-center gap-3">
+                                <i class="fa fa-book fa-3x
+                                   text-warning"/>
+                                <div>
+                                    <h5 class="mb-0">
+                                        <t t-esc="book.name"/>
+                                    </h5>
+                                    <small class="text-muted">
+                                        <t t-if="book.author_id">
+                                            by
+                                            <t t-esc="book.author_id.name"/>
+                                        </t>
+                                    </small>
+                                    <div class="mt-1">
+                                        <span class="badge bg-warning text-dark">
+                                            Currently Borrowed
+                                        </span>
+                                        <span class="ms-2 text-muted small">
+                                            <t t-esc="queue_length"/> people waiting
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Error messages -->
+                        <t t-if="error == 'missing_fields'">
+                            <div class="alert alert-danger">
+                                Please fill in all required fields.
+                            </div>
+                        </t>
+                        <t t-elif="error == 'invalid_email'">
+                            <div class="alert alert-danger">
+                                Please enter a valid email address.
+                            </div>
+                        </t>
+                        <t t-elif="error == 'already_registered'">
+                            <div class="alert alert-warning">
+                                You are already on the waitlist
+                                for this book!
+                            </div>
+                        </t>
+                        <t t-elif="error == 'server_error'">
+                            <div class="alert alert-danger">
+                                Something went wrong.
+                                Please try again.
+                            </div>
+                        </t>
+
+                        <!-- Waitlist form -->
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    Join the Waitlist
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small">
+                                    We will email you as soon
+                                    as this book becomes available.
+                                </p>
+                                <form
+                                    action="/library/waitlist/submit"
+                                    method="POST">
+                                    <input type="hidden"
+                                           name="csrf_token"
+                                           t-att-value="request.csrf_token()"/>
+                                    <input type="hidden"
+                                           name="book_id"
+                                           t-att-value="book.id"/>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">
+                                            Full Name *
+                                        </label>
+                                        <input type="text"
+                                               name="name"
+                                               class="form-control"
+                                               placeholder="Your full name"
+                                               required="required"/>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">
+                                            Email Address *
+                                        </label>
+                                        <input type="email"
+                                               name="email"
+                                               class="form-control"
+                                               placeholder="Your email"
+                                               required="required"/>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            Phone (Optional)
+                                        </label>
+                                        <input type="text"
+                                               name="phone"
+                                               class="form-control"
+                                               placeholder="Your phone number"/>
+                                    </div>
+
+                                    <div class="d-grid mt-4">
+                                        <button type="submit"
+                                                class="btn btn-warning btn-lg text-dark fw-bold">
+                                            Join Waitlist
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!--     WAITLIST SUCCESS PAGE    -->
+    <template id="template_library_waitlist_success"
+              name="Waitlist Success">
+        <t t-call="website.layout">
+            <div class="container mt-5 mb-5">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 text-center">
+                        <div class="card shadow-sm py-5">
+                            <div class="card-body">
+                                <i class="fa fa-clock-o fa-5x
+                                   text-warning mb-4"/>
+                                <h2 class="mb-3">
+                                    You're on the Waitlist!
+                                </h2>
+                                <p class="lead text-muted">
+                                    Hi <strong>
+                                        <t t-esc="name"/>
+                                    </strong>!
+                                </p>
+                                <p class="text-muted">
+                                    You are at position
+                                    <strong class="text-warning
+                                            fs-4">
+                                        #<t t-esc="position"/>
+                                    </strong>
+                                    in the waitlist for
+                                    <strong>
+                                        <t t-esc="book_name"/>
+                                    </strong>.
+                                </p>
+                                <p class="text-muted small">
+                                    We will send you an email
+                                    as soon as the book
+                                    becomes available.
+                                </p>
+                                <hr/>
+                                <a href="/library"
+                                   class="btn btn-primary">
+                                    Browse More Books
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

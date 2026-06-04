@@ -189,3 +189,134 @@ class LibraryWebsiteController(http.Controller):
                 'book_name': kwargs.get('book', 'the book'),
             }
         )
+    
+    @http.route(
+        '/library/waitlist/<int:book_id>',
+        type='http',
+        auth='public',
+        website=True,
+    )
+    def library_waitlist_form(self, book_id, **kwargs):
+        """
+        Shows the waitlist signup form for a book.
+        Only accessible when book is not available.
+        """
+        book = request.env[
+            'library.book'
+        ].sudo().browse(book_id)
+        if not book.exists():
+            return request.not_found()
+
+        # If book is available redirect to borrow instead
+        if book.state == 'available':
+            return request.redirect(
+                f'/library/book/{book_id}'
+            )
+
+        # Get current queue length
+        queue_length = request.env[
+            'library.waitlist'
+        ].sudo().search_count([
+            ('book_id', '=', book_id),
+            ('state', 'in', ['waiting', 'notified']),
+        ])
+
+        return request.render(
+            'library_management'
+            '.template_library_waitlist_form',
+            {
+                'book': book,
+                'queue_length': queue_length,
+                'error': kwargs.get('error'),
+            }
+        )
+
+    @http.route(
+        '/library/waitlist/submit',
+        type='http',
+        auth='public',
+        website=True,
+        methods=['POST'],
+    )
+    def library_waitlist_submit(self, **kwargs):
+        """
+        Handles waitlist form submission.
+        """
+        book_id = int(kwargs.get('book_id', 0))
+        name = kwargs.get('name', '').strip()
+        email = kwargs.get('email', '').strip()
+        phone = kwargs.get('phone', '').strip()
+
+        # Validation
+        if not all([book_id, name, email]):
+            return request.redirect(
+                f'/library/waitlist/{book_id}'
+                f'?error=missing_fields'
+            )
+
+        if '@' not in email:
+            return request.redirect(
+                f'/library/waitlist/{book_id}'
+                f'?error=invalid_email'
+            )
+
+        book = request.env[
+            'library.book'
+        ].sudo().browse(book_id)
+        if not book.exists():
+            return request.redirect('/library')
+
+        # Check if already on waitlist
+        existing = request.env[
+            'library.waitlist'
+        ].sudo().search_count([
+            ('book_id', '=', book_id),
+            ('email', '=', email),
+            ('state', 'in', ['waiting', 'notified']),
+        ])
+
+        if existing:
+            return request.redirect(
+                f'/library/waitlist/{book_id}'
+                f'?error=already_registered'
+            )
+
+        # Create waitlist entry
+        try:
+            entry = request.env[
+                'library.waitlist'
+            ].sudo().create({
+                'book_id': book_id,
+                'name': name,
+                'email': email,
+                'phone': phone,
+            })
+        except Exception:
+            return request.redirect(
+                f'/library/waitlist/{book_id}'
+                f'?error=server_error'
+            )
+
+        return request.redirect(
+            f'/library/waitlist/success'
+            f'?name={name}'
+            f'&book={book.name}'
+            f'&position={entry.position}'
+        )
+
+    @http.route(
+        '/library/waitlist/success',
+        type='http',
+        auth='public',
+        website=True,
+    )
+    def library_waitlist_success(self, **kwargs):
+        return request.render(
+            'library_management'
+            '.template_library_waitlist_success',
+            {
+                'name': kwargs.get('name', 'Friend'),
+                'book_name': kwargs.get('book', 'the book'),
+                'position': kwargs.get('position', '1'),
+            }
+        )

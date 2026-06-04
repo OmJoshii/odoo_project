@@ -5,3 +5,4 @@ from . import library_category
 from . import library_member
 from . import library_borrow_request
 from . import library_api_key
+from . import library_waitlist

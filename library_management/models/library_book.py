@@ -191,6 +191,23 @@ class LibraryBook(models.Model):
                     'Number of pages cannot be negative!'
                 )
             
+    # ── Waitlist ──────────────────────────────────────────────
+    waitlist_count = fields.Integer(
+        string='Waitlist',
+        compute='_compute_waitlist_count',
+        store=True,
+    )
+
+    @api.depends()
+    def _compute_waitlist_count(self):
+        for rec in self:
+            rec.waitlist_count = self.env[
+                'library.waitlist'
+            ].search_count([
+                ('book_id', '=', rec.id),
+                ('state', 'in', ['waiting', 'notified']),
+            ])
+            
 
     # ── Wizard button methods ────────────────────────────────
     def action_open_borrow_wizard(self):
@@ -221,6 +238,17 @@ class LibraryBook(models.Model):
                 'type': 'success',
                 'sticky': False,
             }
+        }
+    
+    def action_view_waitlist(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Waitlist',
+            'res_model': 'library.waitlist',
+            'view_mode': 'list,form',
+            'domain': [('book_id', '=', self.id)],
+            'context': {'default_book_id': self.id},
         }
     
     # ── Scheduled Action Methods ─────────────────────────────
