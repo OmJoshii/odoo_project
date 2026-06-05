@@ -192,13 +192,18 @@ class LibraryBook(models.Model):
                 )
             
     # ── Waitlist ──────────────────────────────────────────────
+    waitlist_ids = fields.One2many(
+    comodel_name='library.waitlist',
+    inverse_name='book_id',
+    string='Waitlist Entries',
+    )
     waitlist_count = fields.Integer(
         string='Waitlist',
         compute='_compute_waitlist_count',
         store=True,
     )
 
-    @api.depends()
+    @api.depends('waitlist_ids', 'waitlist_ids.state')
     def _compute_waitlist_count(self):
         for rec in self:
             rec.waitlist_count = self.env[
